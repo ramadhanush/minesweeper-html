@@ -1,39 +1,193 @@
-<<<<<<< HEAD
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>Minesweeper Game</title>
-    <link rel="stylesheet" href="style.css">
-  </head>
-  <body>
-    <div id="game">
-      <div id="header">
-        <h1>Minesweeper</h1>
-        
-      </div>
-      <div id="board"></div>
-    </div>
-    
-    <script src="script.js"></script>
-  </body>
-</html>
-=======
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>Minesweeper Game</title>
-    <link rel="stylesheet" href="style.css">
-  </head>
-  <body>
-    <div id="game">
-      <div id="header">
-        <h1>Minesweeper</h1>
-        
-      </div>
-      <div id="board"></div>
-    </div>
-    
-    <script src="script.js"></script>
-  </body>
-</html>
->>>>>>> main
+<head>
+	<meta charset="UTF-8">
+	<title>Minesweeper Game</title>
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+		}
+
+		h1 {
+			text-align: center;
+		}
+
+		.board {
+			display: inline-block;
+			border: 2px solid black;
+			margin: 0 auto;
+			align-items: center;
+		}
+
+		.cell {
+			/* previous styles */
+			font-family: 'Roboto', sans-serif;
+			color: white;
+		}
+
+
+
+		.row {
+			display: flex;
+		}
+
+		.cell {
+			width: 30px;
+			height: 30px;
+			border: 1px solid lightgrey;
+			background-color: #4c6e91;
+			text-align: center;
+			line-height: 30px;
+			cursor: pointer;
+		}
+
+		
+		.cell:hover {
+			background-color: #ccc;
+		}
+
+		.revealed {
+			border: 1px solid grey;
+		}
+
+		.bomb {
+			background-image: url('mine.png');
+		}
+
+		.flag {
+  			background-image: url('flag.png');
+		}
+	</style>
+</head>
+<body>
+	<h1>Minesweeper Game</h1>
+	<div class="board"></div>
+	<script>
+		let board = document.querySelector('.board');
+		let size = 10; // Change the value to adjust difficulty
+		let bombs = Math.floor(size * size / 6); // Change the value to adjust number of bombs
+
+		let cells = [];
+		let bombLocations = [];
+
+		function init() {
+			// Create cells
+			for(let i = 0; i < size; i++) {
+				let row = document.createElement('div');
+				row.classList.add('row');
+				cells[i] = [];
+				for(let j = 0; j < size; j++) {
+					let cell = document.createElement('div');
+					cell.classList.add('cell');
+					cells[i][j] = { el: cell, value: 0 };
+					row.appendChild(cell);
+				}
+				board.appendChild(row);
+			}
+
+			// Place bombs
+			for(let i = 0; i < bombs; i++) {
+				let row = Math.floor(Math.random() * size);
+				let col = Math.floor(Math.random() * size);
+				if(cells[row][col].value === 'B') {
+					i--;
+				} else {
+					cells[row][col].value = 'B';
+					bombLocations.push([row, col]);
+				}
+			}
+
+			// Calculate numbers
+			for(let i = 0; i < bombLocations.length; i++) {
+				let [row, col] = bombLocations[i];
+				for(let j = row - 1; j <= row + 1; j++) {
+					for(let k = col - 1; k <= col + 1; k++) {
+						if(j >= 0 && j < size && k >= 0 && k < size && cells[j][k].value !== 'B') {
+							cells[j][k].value++;
+						}
+					}
+				}
+			}
+
+			// Add event listeners
+			for(let i = 0; i < size; i++) {
+				for(let j = 0; j < size; j++) {
+					cells[i][j].el.addEventListener('click', () => reveal(i, j));
+					cells[i][j].el.addEventListener('contextmenu', (e) => flag(e, i, j));
+				}
+			}
+		}
+
+		function reveal(row, col) {
+			if(cells[row][col].el.classList.contains('flag')) {
+				return;
+			}
+
+			if(cells[row][col].value === 'B') {
+				gameOver();
+			} else if(cells[row][col].value > 0) {
+				cells[row][col].el.textContent = cells[row][col].value;
+				cells[row][col].el.style.backgroundColor = 'white';
+			} else {
+				cells[row][col].el.style.backgroundColor = 'white';
+
+				for(let i = row - 1; i <= row + 1; i++) {
+					for(let j = col - 1; j <= col + 1; j++) {
+						if(i >= 0 && i < size && j >= 0 && j < size && cells[i][j].value !== 'B' && !cells[i][j].el.classList.contains('revealed')) {
+							cells[i][j].el.classList.add('revealed');
+							reveal(i, j);
+						}
+					}
+				}
+			}
+
+			// Check for win
+			let revealedCount = 0;
+			for(let i = 0; i < size; i++) {
+				for(let j = 0; j < size; j++) {
+					if(cells[i][j].el.classList.contains('revealed')) {
+						revealedCount++;
+						}
+					}
+				}
+				if(revealedCount === size * size - bombs) {
+					gameWon();
+				}
+			}
+
+			function flag(e, row, col) {
+				e.preventDefault();
+				if(!cells[row][col].el.classList.contains('revealed')) {
+					cells[row][col].el.classList.toggle('flag');
+				}
+			}
+
+			function gameOver() {
+				for(let i = 0; i < size; i++) {
+					for(let j = 0; j < size; j++) {
+						if(cells[i][j].value === 'B') {
+							cells[i][j].el.classList.add('bomb');
+						}
+						cells[i][j].el.removeEventListener('click', reveal);
+						cells[i][j].el.removeEventListener('contextmenu', flag);
+					}
+				}
+				alert('Game over!');
+				location.reload();
+			}
+
+			function gameWon() {
+				for(let i = 0; i < size; i++) {
+					for(let j = 0; j < size; j++) {
+						cells[i][j].el.removeEventListener('click', reveal);
+						cells[i][j].el.removeEventListener('contextmenu', flag);
+					}
+				}
+				alert('Congratulations! You won!');
+				location.reload();
+			}
+
+			init();
+		</script>
+		</body>
+		</html>
