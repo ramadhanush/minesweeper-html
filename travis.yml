@@ -8,10 +8,10 @@ before_install:
 
 script:
   # Build and tag the Docker image
-  - docker build -t minesweeper .
+  - docker build -t minesweeper:v1 .
 
   # Test the Docker image
-  - docker run -d -p 8080:80 minesweeper
+  - docker run -d -p 8080:80 minesweeper:v1
   - sleep 5 # wait for nginx to start
   - response=$(curl --write-out %{http_code} --silent --output /dev/null localhost:8080)
   - if [ $response != "200" ]; then exit 1; fi
