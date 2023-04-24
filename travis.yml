@@ -1,0 +1,18 @@
+language: bash
+
+services:
+  - docker
+
+before_install:
+  - sudo apt-get install sshpass
+
+script:
+  # Build and tag the Docker image
+  - docker build -t minesweeper .
+
+  # Test the Docker image
+  - docker run -d -p 8080:80 minesweeper
+  - sleep 5 # wait for nginx to start
+  - response=$(curl --write-out %{http_code} --silent --output /dev/null localhost:8080)
+  - if [ $response != "200" ]; then exit 1; fi
+  - echo  "test passed"
